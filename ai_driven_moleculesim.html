@@ -1,0 +1,3551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI驱动分子模拟平台</title>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --secondary: #0ea5e9;
+            --secondary-light: #7dd3fc;
+            --secondary-dark: #0369a1;
+            --accent: #10b981;
+            --accent-light: #6ee7b7;
+            --accent-dark: #059669;
+            --success: #16a34a;
+            --warning: #fb923c;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --radius-sm: 0.25rem;
+            --radius: 0.5rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --primary-dark: #2563eb;
+            --secondary: #0ea5e9;
+            --secondary-light: #38bdf8;
+            --secondary-dark: #0284c7;
+            --accent: #10b981;
+            --accent-light: #34d399;
+            --accent-dark: #059669;
+            --success: #22c55e;
+            --warning: #f97316;
+            --danger: #ef4444;
+            --gray-50: #1f2937;
+            --gray-100: #1a1f2e;
+            --gray-200: #374151;
+            --gray-300: #4b5563;
+            --gray-400: #6b7280;
+            --gray-500: #9ca3af;
+            --gray-600: #55585d;
+            --gray-700: #bdbfc3;
+            --gray-800: #8c9098;
+            --gray-900: #d2dce6;
+            
+            /* 暗色模式背景和文本颜色 */
+            background-color: var(--gray-100);
+            color: var(--gray-200);
+        }
+        
+        /* 暗色模式下的组件样式覆盖 */
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .sidebar,
+        [data-theme="dark"] .workspace-header,
+        [data-theme="dark"] .builder-tools,
+        [data-theme="dark"] .builder-properties {
+            background-color: var(--gray-50);
+            border-color: var(--gray-200);
+        }
+        
+        [data-theme="dark"] .nav-item a {
+            color: var(--gray-500);
+        }
+        
+        [data-theme="dark"] .nav-item a:hover,
+        [data-theme="dark"] .nav-item a.active {
+            background-color: var(--gray-200);
+            color: var(--gray-100);
+        }
+        
+        [data-theme="dark"] .form-control {
+            background-color: var(--gray-100);
+            border-color: var(--gray-300);
+            color: var(--gray-700);
+        }
+        
+        [data-theme="dark"] .btn-outline {
+            border-color: var(--gray-300);
+            color: var(--gray-500);
+        }
+        
+        [data-theme="dark"] .btn-outline:hover {
+            background-color: var(--gray-200);
+            border-color: var(--gray-400);
+        }
+        
+        /* 暗色模式下的自定义按钮样式 */
+        #dark-mode-toggle {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        #dark-mode-toggle .theme-icon {
+            font-size: 1.2rem;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header styles */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--primary-dark);
+            height: 4rem;
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo img {
+            height: 2.5rem;
+            width: auto;
+        }
+
+        .logo h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .user-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Main content area */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--gray-200);
+            z-index: 90;
+            transition: width 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            padding: 0 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.125rem;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item a:hover {
+            background-color: var(--gray-100);
+            color: var(--primary);
+        }
+
+        .nav-item a.active {
+            background-color: var(--gray-100);
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: var(--gray-50);
+        }
+
+        .workspace-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            background-color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .workspace-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .workspace-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* Card styles */
+        .card {
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-icon {
+            color: var(--primary);
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        .card-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--gray-200);
+            background-color: var(--gray-50);
+        }
+
+        /* Form styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-hint {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            margin-top: 0.25rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background-color: white;
+            color: var(--gray-800);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: var(--gray-400);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .input-group-append {
+            display: flex;
+        }
+
+        .input-group-text {
+            padding: 0.625rem 0.875rem;
+            background-color: var(--gray-100);
+            color: var(--gray-600);
+            border: 1px solid var(--gray-300);
+            border-left: none;
+            border-top-right-radius: var(--radius);
+            border-bottom-right-radius: var(--radius);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            text-decoration: none;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-icon {
+            width: 1rem;
+            height: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background-color: var(--accent-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border-color: var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--gray-100);
+            border-color: var(--gray-400);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-text {
+            background-color: transparent;
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+        }
+
+        .btn-text:hover {
+            background-color: var(--gray-100);
+        }
+
+        /* AI Assistant Button */
+        .btn-ai {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border-radius: 2rem;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-ai:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn-ai-icon {
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            margin-bottom: 1.25rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Grid layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+
+        .col-12 { grid-column: span 12; }
+        .col-8 { grid-column: span 8; }
+        .col-6 { grid-column: span 6; }
+        .col-4 { grid-column: span 4; }
+        .col-3 { grid-column: span 3; }
+
+        /* Split View */
+        .split-view {
+            display: flex;
+            height: 100%;
+            gap: 1.5rem;
+        }
+
+        .split-pane {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Visual elements */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .badge-primary {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .badge-secondary {
+            background-color: var(--secondary-light);
+            color: var(--secondary-dark);
+        }
+
+        .badge-success {
+            background-color: #dcfce7;
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background-color: #fff7ed;
+            color: #c2410c;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: var(--danger);
+        }
+
+        /* Workspace specific styles */
+        .molecule-builder {
+            display: flex;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        .builder-tools {
+            width: 240px;
+            background-color: white;
+            border-right: 1px solid var(--gray-200);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .tool-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-700);
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border-radius: var(--radius);
+            background-color: var(--gray-50);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+        }
+
+        .tool-btn:hover {
+            background-color: var(--gray-100);
+        }
+
+        .tool-btn.active {
+            background-color: var(--primary-light);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tool-icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-label {
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        .builder-canvas {
+            flex: 1;
+            position: relative;
+            background-color: var(--gray-50);
+            overflow: hidden;
+        }
+
+        #moleculeCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .builder-properties {
+            width: 280px;
+            background-color: white;
+            border-left: 1px solid var(--gray-200);
+            padding: 1.25rem;
+            overflow-y: auto;
+        }
+
+        .properties-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .properties-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--gray-700);
+        }
+
+        .property-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .property-label {
+            color: var(--gray-600);
+        }
+
+        .property-value {
+            font-weight: 500;
+        }
+
+        /* Simulation controls */
+        .simulation-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.25rem;
+            background-color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .control-section {
+            flex: 1;
+        }
+
+        .control-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-600);
+        }
+
+        .progress-container {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background-color: var(--gray-200);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary);
+            border-radius: 1rem;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-top: 0.25rem;
+        }
+
+        /* Visualization area */
+        .visualization-container {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            background-color: var(--gray-100);
+            border: 1px solid var(--gray-200);
+        }
+
+        .visualization-toolbar {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .vis-toolbar-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .vis-toolbar-btn:hover {
+            background-color: var(--gray-100);
+        }
+
+        /* Analytics */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            min-height: 300px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* Data tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-200);
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .data-table tr:hover td {
+            background-color: var(--gray-50);
+        }
+
+        /* AI Elements */
+        .ai-assistant-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            border: 1px solid #bae6fd;
+        }
+
+        .ai-assistant-icon {
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .ai-assistant-content {
+            flex: 1;
+        }
+
+        .ai-assistant-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--primary-dark);
+        }
+
+        .ai-assistant-text {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+        }
+
+        .ai-assistant-actions {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ai-suggestion {
+            background-color: #f0f9ff;
+            border-left: 3px solid var(--secondary);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 var(--radius) var(--radius) 0;
+        }
+
+        .ai-suggestion-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-suggestion-icon {
+            color: var(--secondary);
+        }
+
+        /* Natural language input area */
+        .nl-input-container {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            z-index: 50;
+        }
+
+        .nl-input-form {
+            display: flex;
+            background-color: white;
+            border-radius: 2rem;
+            padding: 0.25rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+        }
+
+        .nl-input {
+            flex: 1;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .nl-input:focus {
+            outline: none;
+        }
+
+        .nl-submit {
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 2.75rem;
+            height: 2.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nl-submit:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .nl-examples {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            width: 100%;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nl-example {
+            background-color: white;
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid var(--gray-200);
+        }
+
+        .nl-example:hover {
+            background-color: var(--gray-100);
+            border-color: var(--primary-light);
+        }
+
+        /* Animation for AI features */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        /* Utility classes */
+        .mb-0 { margin-bottom: 0; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-6 { margin-top: 1.5rem; }
+        
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        
+        .font-bold { font-weight: 700; }
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        
+        .rounded { border-radius: var(--radius); }
+        .rounded-full { border-radius: 9999px; }
+        
+        .shadow { box-shadow: var(--shadow); }
+        .shadow-lg { box-shadow: var(--shadow-lg); }
+        
+        .text-primary { color: var(--primary); }
+        .text-secondary { color: var(--secondary); }
+        .text-success { color: var(--success); }
+        .text-warning { color: var(--warning); }
+        .text-danger { color: var(--danger); }
+        .text-gray { color: var(--gray-500); }
+        .text-dark { color: var(--gray-800); }
+        
+        .bg-white { background-color: white; }
+        .bg-gray-50 { background-color: var(--gray-50); }
+        .bg-gray-100 { background-color: var(--gray-100); }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <img src="./logo.png" alt="Logo" style="height: 2.5rem; width: auto;">
+                <h1>AI驱动分子模拟平台</h1>
+            </div>
+            <div class="user-controls">
+                <button class="btn btn-ai">
+                    <span class="btn-ai-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 8V4H8"></path>
+                            <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                            <path d="M2 14h2"></path>
+                            <path d="M20 14h2"></path>
+                            <path d="M15 13v2"></path>
+                            <path d="M9 13v2"></path>
+                        </svg>
+                    </span>
+                    智能助手
+                </button>
+                <button id="dark-mode-toggle" class="btn btn-outline">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="btn btn-outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    设置
+                </button>
+                <button class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5v14"></path>
+                    </svg>
+                    新建项目
+                </button>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-scroll">
+                    <div class="nav-section">
+                        <h3 class="nav-section-title">项目管理</h3>
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="#overview" class="active">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+                                            <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+                                            <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+                                            <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+                                        </svg>
+                                    </span>
+                                    项目概览
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#history">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 8v4l3 3"></path>
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                        </svg>
+                                    </span>
+                                    历史记录
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="nav-section">
+                        <h3 class="nav-section-title">仿真工作流</h3>
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="#build">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M9 13l2 2 4-4"></path>
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                        </svg>
+                                    </span>
+                                    分子构建
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#system">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20.5 7h-17"></path>
+                                            <path d="M20.5 12h-17"></path>
+                                            <path d="M20.5 17h-17"></path>
+                                        </svg>
+                                    </span>
+                                    体系设置
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#simulation">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M12 16v-4"></path>
+                                            <path d="M8 12h4"></path>
+                                        </svg>
+                                    </span>
+                                    仿真参数
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#monitor">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M2 12h2"></path>
+                                            <path d="M20 12h2"></path>
+                                            <path d="M12 2v2"></path>
+                                            <path d="M12 20v2"></path>
+                                            <path d="M18.36 5.64l-1.4 1.4"></path>
+                                            <path d="M6.34 17.66l-1.4 1.4"></path>
+                                            <path d="M5.64 5.64l1.4 1.4"></path>
+                                            <path d="M17.66 17.66l1.4 1.4"></path>
+                                            <circle cx="12" cy="12" r="8"></circle>
+                                        </svg>
+                                    </span>
+                                    运行监测
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#analysis">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 3v18h18"></path>
+                                            <path d="m8 12 3-3 2 2 3-3"></path>
+                                            <path d="M18 12v6"></path>
+                                        </svg>
+                                    </span>
+                                    数据分析与可视化
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="nav-section">
+                        <h3 class="nav-section-title">支持</h3>
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="#help">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                            <path d="M12 17h.01"></path>
+                                        </svg>
+                                    </span>
+                                    帮助中心
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#tutorials">
+                                    <span class="nav-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2h11A2.5 2.5 0 0 1 20 4.5v15a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 19.5z"></path>
+                                            <path d="M12 6.5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1z"></path>
+                                        </svg>
+                                    </span>
+                                    教程与资源
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main workspace -->
+            <div class="workspace">
+                <!-- Workspace header -->
+                <div class="workspace-header">
+                    <div>
+                        <h1 class="page-title">分子构建</h1>
+                        <p class="text-gray">通过自然语言描述或图形界面构建您的分子模型</p>
+                    </div>
+                    <div class="workspace-actions">
+                        <button class="btn btn-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            导入结构
+                        </button>
+                        <button class="btn btn-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            导出
+                        </button>
+                        <button class="btn btn-primary">
+                            下一步
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Workspace content area -->
+                <div class="workspace-content">
+                    <!-- AI Assistant Banner -->
+                    <div class="ai-assistant-banner">
+                        <div class="ai-assistant-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>
+                        </div>
+                        <div class="ai-assistant-content">
+                            <h3 class="ai-assistant-title">AI助手已激活</h3>
+                            <p class="ai-assistant-text">您可以通过自然语言描述想要构建的分子结构或体系，AI将自动生成结构或为您提供定制化建议。</p>
+                            <div class="ai-assistant-actions">
+                                <button class="btn btn-sm btn-primary">查看示例</button>
+                                <button class="btn btn-sm btn-outline">了解更多</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Molecular Builder -->
+                    <div class="molecule-builder">
+                        <!-- Tools Panel -->
+                        <div class="builder-tools">
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">绘图工具</h3>
+                                <div class="tool-grid">
+                                    <div class="tool-btn active">
+                                        <span class="tool-icon">✏️</span>
+                                        <span class="tool-label">选择</span>
+                                    </div>
+                                    <div class="tool-btn">
+                                        <span class="tool-icon">⚛️</span>
+                                        <span class="tool-label">原子</span>
+                                    </div>
+                                    <div class="tool-btn">
+                                        <span class="tool-icon">━</span>
+                                        <span class="tool-label">键</span>
+                                    </div>
+                                    <div class="tool-btn">
+                                        <span class="tool-icon">⭕</span>
+                                        <span class="tool-label">环</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">常用结构</h3>
+                                <div class="element-list">
+                                    <div class="form-group">
+                                        <select class="form-control">
+                                            <option>从模板库选择</option>
+                                            <option>苯环</option>
+                                            <option>氨基酸</option>
+                                            <option>脂肪链</option>
+                                            <option>纳米管</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">原子类型</h3>
+                                <div class="element-grid">
+                                    <button class="btn btn-sm btn-outline mb-2">C</button>
+                                    <button class="btn btn-sm btn-outline mb-2">H</button>
+                                    <button class="btn btn-sm btn-outline mb-2">O</button>
+                                    <button class="btn btn-sm btn-outline mb-2">N</button>
+                                    <button class="btn btn-sm btn-outline mb-2">S</button>
+                                    <button class="btn btn-sm btn-outline mb-2">P</button>
+                                    <button class="btn btn-sm btn-outline">更多...</button>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">操作</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 7v6h6"></path>
+                                            <path d="M3 13c0-4.97 4.03-9 9-9 3.9 0 7.25 2.51 8.5 6"></path>
+                                            <path d="M21 17v-6h-6"></path>
+                                            <path d="M21 11c0 4.97-4.03 9-9 9-3.9 0-7.25-2.51-8.5-6"></path>
+                                        </svg>
+                                        撤销
+                                    </button>
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                                            <path d="m9 9 6 6"></path>
+                                            <path d="m15 9-6 6"></path>
+                                        </svg>
+                                        清除
+                                    </button>
+                                </div>
+                                <button class="btn btn-sm btn-outline w-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                        <path d="M3 3v5h5"></path>
+                                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                                        <path d="M16 21h5v-5"></path>
+                                    </svg>
+                                    优化结构
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Canvas area -->
+                        <div class="builder-canvas">
+                            <canvas id="moleculeCanvas"></canvas>
+
+                            <!-- Natural language input -->
+                            <div class="nl-input-container">
+                                <div class="nl-examples">
+                                    <span class="nl-example">添加一个水分子</span>
+                                    <span class="nl-example">绘制苯环</span>
+                                    <span class="nl-example">构建甲烷分子</span>
+                                </div>
+                                <form class="nl-input-form">
+                                    <input type="text" class="nl-input" placeholder="描述您想要构建的分子结构..." />
+                                    <button type="submit" class="nl-submit pulse-animation">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M5 12h14"></path>
+                                            <path d="m12 5 7 7-7 7"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Properties panel -->
+                        <div class="builder-properties">
+                            <div class="properties-section">
+                                <h3 class="properties-title">分子信息</h3>
+                                <div class="property-row">
+                                    <span class="property-label">原子数:</span>
+                                    <span class="property-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <span class="property-label">键数:</span>
+                                    <span class="property-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <span class="property-label">状态:</span>
+                                    <span class="property-value">
+                                        <span class="badge badge-success">准备就绪</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="properties-section">
+                                <h3 class="properties-title">选中元素属性</h3>
+                                <div class="form-group">
+                                    <label class="form-label">元素类型</label>
+                                    <select class="form-control">
+                                        <option>C (碳)</option>
+                                        <option>H (氢)</option>
+                                        <option>O (氧)</option>
+                                        <option>N (氮)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">电荷 (e)</label>
+                                    <input type="number" class="form-control" value="0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">坐标 (Å)</label>
+                                    <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                                        <input type="number" class="form-control" placeholder="X" step="0.1">
+                                        <input type="number" class="form-control" placeholder="Y" step="0.1">
+                                        <input type="number" class="form-control" placeholder="Z" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-suggestion">
+                                <div class="ai-suggestion-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="ai-suggestion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                        <path d="M7 16.8V16"></path>
+                                        <path d="M12 16.8V9"></path>
+                                        <path d="M17 16.8V12"></path>
+                                        <path d="M15.5 20h-7"></path>
+                                        <path d="M8.5 22h7"></path>
+                                    </svg>
+                                    AI建议
+                                </div>
+                                <p class="text-sm">尝试添加一个苯环作为基础结构，然后在侧链位置加入羧基(-COOH)可以形成苯甲酸。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 原有的暗黑模式切换逻辑保持不变
+            const toggleButton = document.getElementById('dark-mode-toggle');
+            const htmlElement = document.documentElement;
+            
+            // 设置初始主题
+            const savedTheme = localStorage.getItem('theme') || 
+                              (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            htmlElement.dataset.theme = savedTheme;
+            toggleButton.querySelector('.theme-icon').textContent = savedTheme === 'light' ? '🌙' : '☀️';
+            
+            toggleButton.addEventListener('click', () => {
+                const currentTheme = htmlElement.dataset.theme;
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                htmlElement.dataset.theme = newTheme;
+                localStorage.setItem('theme', newTheme);
+                toggleButton.querySelector('.theme-icon').textContent = newTheme === 'light' ? '🌙' : '☀️';
+            });
+        
+            // 添加导航按钮的点击事件处理
+            const navItems = document.querySelectorAll('.nav-item a');
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault(); // 阻止默认的链接行为
+                    
+                    // 移除所有导航项的active类
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    
+                    // 为当前点击的导航项添加active类
+                    this.classList.add('active');
+                    
+                    // 获取要显示的内容区域的ID
+                    const targetId = this.getAttribute('href').substring(1);
+                    
+                    // 这里可以添加显示对应内容的逻辑
+                    console.log('Navigating to:', targetId);
+                    
+                    // 如果需要，可以更新URL但不刷新页面
+                    history.pushState(null, '', `#${targetId}`);
+                });
+            });
+        
+            // 处理页面加载时的初始激活状态
+            const currentHash = window.location.hash.substring(1);
+            if (currentHash) {
+                const activeNav = document.querySelector(`.nav-item a[href="#${currentHash}"]`);
+                if (activeNav) {
+                    activeNav.classList.add('active');
+                }
+            }
+        
+            // 初始化分子画布
+            const canvas = document.getElementById('moleculeCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 工具按钮点击事件
+            const toolButtons = document.querySelectorAll('.tool-btn');
+            toolButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    toolButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        
+     
+            // 创建内容区域模板（在实际应用中，这些内容会是实际的UI组件）
+            const contentTemplates = {
+                'history': `
+                    <h2 class="mb-4">历史记录</h2>
+                    
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M12 8v4l3 3"></path>
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                </svg>
+                                最近的模拟记录
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <input type="text" placeholder="搜索..." class="form-control" style="width: 200px">
+                                <button class="btn btn-sm btn-outline">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                        <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                                        <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                                        <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                    </svg>
+                                    导出
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>项目名称</th>
+                                        <th>创建日期</th>
+                                        <th>状态</th>
+                                        <th>运行时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>纳米催化剂模拟</td>
+                                        <td>2024-03-15</td>
+                                        <td><span class="badge badge-primary">进行中</span></td>
+                                        <td>12h 34m</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline">查看</button>
+                                            <button class="btn btn-sm btn-outline">复制</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>嵌段共聚物自组装</td>
+                                        <td>2024-03-10</td>
+                                        <td><span class="badge badge-success">已完成</span></td>
+                                        <td>24h 12m</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline">查看</button>
+                                            <button class="btn btn-sm btn-outline">复制</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>蛋白质构象变化</td>
+                                        <td>2024-03-05</td>
+                                        <td><span class="badge badge-warning">已暂停</span></td>
+                                        <td>8h 45m</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline">查看</button>
+                                            <button class="btn btn-sm btn-outline">复制</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>量子点光电特性</td>
+                                        <td>2024-03-01</td>
+                                        <td><span class="badge badge-success">已完成</span></td>
+                                        <td>17h 22m</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline">查看</button>
+                                            <button class="btn btn-sm btn-outline">复制</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>小分子药物筛选</td>
+                                        <td>2024-02-25</td>
+                                        <td><span class="badge badge-danger">异常终止</span></td>
+                                        <td>3h 12m</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline">查看</button>
+                                            <button class="btn btn-sm btn-outline">复制</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer">
+                            <div class="flex justify-between items-center">
+                                <div class="text-sm text-gray">显示 1-5 / 28 个结果</div>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-sm btn-outline">上一页</button>
+                                    <button class="btn btn-sm btn-primary">1</button>
+                                    <button class="btn btn-sm btn-outline">2</button>
+                                    <button class="btn btn-sm btn-outline">3</button>
+                                    <button class="btn btn-sm btn-outline">下一页</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M4.1 19h15.8a2 2 0 0 0 1.7-2.3l-2.9-11a2 2 0 0 0-2-1.7H7.2a2 2 0 0 0-2 1.7l-2.9 11A2 2 0 0 0 4 19Z"></path>
+                                    <path d="M9 3h6l1 4.5"></path>
+                                </svg>
+                                操作记录
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="height: 400px; overflow-y: auto;">
+                                <div class="mb-4 border-l-2 border-primary pl-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold">项目创建</span>
+                                        <span class="text-sm text-gray">2024-03-16 09:45:22</span>
+                                    </div>
+                                    <p class="text-sm">创建了新项目"碳纳米管电子特性"</p>
+                                </div>
+                                <div class="mb-4 border-l-2 border-primary pl-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold">分子构建</span>
+                                        <span class="text-sm text-gray">2024-03-16 09:48:35</span>
+                                    </div>
+                                    <p class="text-sm">使用AI生成了单壁碳纳米管结构</p>
+                                </div>
+                                <div class="mb-4 border-l-2 border-primary pl-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold">参数设置</span>
+                                        <span class="text-sm text-gray">2024-03-16 09:52:17</span>
+                                    </div>
+                                    <p class="text-sm">配置了模拟参数，选择了CHARMM力场和NPT系综</p>
+                                </div>
+                                <div class="mb-4 border-l-2 border-primary pl-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold">仿真启动</span>
+                                        <span class="text-sm text-gray">2024-03-16 10:03:41</span>
+                                    </div>
+                                    <p class="text-sm">开始运行模拟，设置总步数为1,000,000</p>
+                                </div>
+                                <div class="mb-4 border-l-2 border-primary pl-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold">文件导出</span>
+                                        <span class="text-sm text-gray">2024-03-16 10:15:08</span>
+                                    </div>
+                                    <p class="text-sm">导出了初始结构文件和参数设置</p>
+                                </div>
+                                <div class="mb-4 border-l-2 border-primary pl-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold">仿真监控</span>
+                                        <span class="text-sm text-gray">2024-03-16 11:27:53</span>
+                                    </div>
+                                    <p class="text-sm">查看了模拟进度和能量演化图</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'tutorials': `
+                    <h2 class="mb-4">教程与资源</h2>
+                    
+                    <div class="ai-assistant-banner mb-6">
+                        <div class="ai-assistant-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                <path d="M14 2v6h6"></path>
+                                <path d="M16 13H8"></path>
+                                <path d="M16 17H8"></path>
+                                <path d="M10 9H8"></path>
+                            </svg>
+                        </div>
+                        <div class="ai-assistant-content">
+                            <h3 class="ai-assistant-title">个性化学习路径</h3>
+                            <p class="ai-assistant-text">我们的AI助手可以根据您的背景和需求生成个性化的学习计划，帮助您更高效地掌握分子动力学模拟技能。</p>
+                            <div class="ai-assistant-actions">
+                                <button class="btn btn-sm btn-primary">生成学习计划</button>
+                                <button class="btn btn-sm btn-outline">了解更多</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tabs mb-6">
+                        <div class="tab active">入门教程</div>
+                        <div class="tab">进阶指南</div>
+                        <div class="tab">案例分析</div>
+                        <div class="tab">常见问题</div>
+                    </div>
+                    
+                    <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div class="card">
+                            <div style="height: 160px; background-color: var(--primary-light); border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: center; align-items: center; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="font-bold text-lg mb-2">平台快速入门</h3>
+                                <p class="mb-4 text-sm">了解平台界面、基本功能和操作流程，快速上手分子动力学模拟。</p>
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 8v4l3 3"></path>
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                    15分钟 · 入门级
+                                </div>
+                                <button class="btn btn-primary w-full">开始学习</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div style="height: 160px; background-color: var(--secondary); border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: center; align-items: center; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.48-8.48l8.48-8.48a4 4 0 0 1 5.66 5.66l-7.78 7.78a2 2 0 0 1-2.83-2.83l6.37-6.37"></path>
+                                </svg>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="font-bold text-lg mb-2">分子构建指南</h3>
+                                <p class="mb-4 text-sm">学习如何构建常见和复杂分子结构，包括手动构建和AI辅助方法。</p>
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 8v4l3 3"></path>
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                    25分钟 · 入门级
+                                </div>
+                                <button class="btn btn-primary w-full">开始学习</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div style="height: 160px; background-color: var(--accent); border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: center; align-items: center; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                    <path d="M7 16.8V16"></path>
+                                    <path d="M12 16.8V9"></path>
+                                    <path d="M17 16.8V12"></path>
+                                    <path d="M15.5 20h-7"></path>
+                                    <path d="M8.5 22h7"></path>
+                                </svg>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="font-bold text-lg mb-2">AI助手使用技巧</h3>
+                                <p class="mb-4 text-sm">充分利用AI助手功能，学习如何用自然语言描述高效构建分子模型。</p>
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 8v4l3 3"></path>
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                    20分钟 · 中级
+                                </div>
+                                <button class="btn btn-primary w-full">开始学习</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div style="height: 160px; background-color: var(--warning); border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: center; align-items: center; color: white;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 3v18h18"></path>
+                                    <path d="m3 8 4-4 5 5 5-5 4 4"></path>
+                                    <path d="m3 14 4-4 5 5 5-5 4 4"></path>
+                                    <path d="m3 20 4-4 5 5 5-5 4 4"></path>
+                                </svg>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="font-bold text-lg mb-2">结果分析与可视化</h3>
+                                <p class="mb-4 text-sm">学习如何解读模拟结果、创建可视化图表和生成科研报告。</p>
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 8v4l3 3"></path>
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                    30分钟 · 中级
+                                </div>
+                                <button class="btn btn-primary w-full">开始学习</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-bold text-xl mt-8 mb-6">最新资源</h3>
+                    
+                    <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div class="card bg-gray-50">
+                            <div class="card-body">
+                                <span class="badge badge-primary mb-2">新增</span>
+                                <h3 class="font-bold text-lg mb-2">使用AI进行药物设计</h3>
+                                <p class="mb-4 text-sm">探索如何结合分子动力学模拟和AI技术进行药物分子的设计与优化。</p>
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    张教授 · 2024-03-10
+                                </div>
+                                <button class="btn btn-outline w-full">查看详情</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-gray-50">
+                            <div class="card-body">
+                                <span class="badge badge-secondary mb-2">案例</span>
+                                <h3 class="font-bold text-lg mb-2">新型催化剂性能评估</h3>
+                                <p class="mb-4 text-sm">通过MD仿真研究碳负载金属催化剂的反应活性与选择性关系。</p>
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    李研究员 · 2024-03-05
+                                </div>
+                                <button class="btn btn-outline w-full">查看详情</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-gray-50">
+                            <div class="card-body">
+                                <span class="badge badge-accent mb-2">教程</span>
+                                <h3 class="font-bold text-lg mb-2">高级力场参数调优</h3>
+                                <p class="mb-4 text-sm">学习如何根据实验数据和量子计算结果优化MD力场参数。</p>
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    王工程师 · 2024-02-28
+                                </div>
+                                <button class="btn btn-outline w-full">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'overview': `
+                    <h2 class="mb-4">项目概览</h2>
+                    <div class="ai-assistant-banner mb-6">
+                        <div class="ai-assistant-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                <path d="M7 16.8V16"></path>
+                                <path d="M12 16.8V9"></path>
+                                <path d="M17 16.8V12"></path>
+                                <path d="M15.5 20h-7"></path>
+                                <path d="M8.5 22h7"></path>
+                            </svg>
+                        </div>
+                        <div class="ai-assistant-content">
+                            <h3 class="ai-assistant-title">欢迎使用AI驱动分子模拟平台</h3>
+                            <p class="ai-assistant-text">这里您可以查看您的所有项目和最近的活动。您需要创建新项目还是继续之前的工作？</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">纳米催化剂模拟</h3>
+                                <span class="badge badge-primary">进行中</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-4">金属氧化物表面吸附气体分子的模拟研究</p>
+                                <div class="progress-bar mb-2">
+                                    <div class="progress-fill" style="width: 65%"></div>
+                                </div>
+                                <p class="text-sm text-gray">65% 完成</p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray">2024-03-15</span>
+                                    <button class="btn btn-sm btn-primary">继续</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">嵌段共聚物自组装</h3>
+                                <span class="badge badge-success">已完成</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-4">PS-b-PMMA嵌段共聚物在不同溶剂中的自组装行为研究</p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray">2024-03-10</span>
+                                    <button class="btn btn-sm btn-outline">查看结果</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">蛋白质构象变化</h3>
+                                <span class="badge badge-warning">已暂停</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-4">温度对酶活性中心构象变化的影响</p>
+                                <div class="progress-bar mb-2">
+                                    <div class="progress-fill" style="width: 42%"></div>
+                                </div>
+                                <p class="text-sm text-gray">42% 完成</p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray">2024-03-05</span>
+                                    <button class="btn btn-sm btn-primary">继续</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'build': `
+                    <div class="ai-assistant-banner">
+                        <div class="ai-assistant-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>
+                        </div>
+                        <div class="ai-assistant-content">
+                            <h3 class="ai-assistant-title">AI助手已激活</h3>
+                            <p class="ai-assistant-text">您可以通过自然语言描述想要构建的分子结构或体系，AI将自动生成结构或为您提供定制化建议。</p>
+                            <div class="ai-assistant-actions">
+                                <button class="btn btn-sm btn-primary">查看示例</button>
+                                <button class="btn btn-sm btn-outline">了解更多</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Molecular Builder -->
+                    <div class="molecule-builder">
+                        <!-- Tools Panel -->
+                        <div class="builder-tools">
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">绘图工具</h3>
+                                <div class="tool-grid">
+                                    <div class="tool-btn active">
+                                        <span class="tool-icon">✏️</span>
+                                        <span class="tool-label">选择</span>
+                                    </div>
+                                    <div class="tool-btn">
+                                        <span class="tool-icon">⚛️</span>
+                                        <span class="tool-label">原子</span>
+                                    </div>
+                                    <div class="tool-btn">
+                                        <span class="tool-icon">━</span>
+                                        <span class="tool-label">键</span>
+                                    </div>
+                                    <div class="tool-btn">
+                                        <span class="tool-icon">⭕</span>
+                                        <span class="tool-label">环</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">常用结构</h3>
+                                <div class="element-list">
+                                    <div class="form-group">
+                                        <select class="form-control">
+                                            <option>从模板库选择</option>
+                                            <option>苯环</option>
+                                            <option>氨基酸</option>
+                                            <option>脂肪链</option>
+                                            <option>纳米管</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">原子类型</h3>
+                                <div class="element-grid">
+                                    <button class="btn btn-sm btn-outline mb-2">C</button>
+                                    <button class="btn btn-sm btn-outline mb-2">H</button>
+                                    <button class="btn btn-sm btn-outline mb-2">O</button>
+                                    <button class="btn btn-sm btn-outline mb-2">N</button>
+                                    <button class="btn btn-sm btn-outline mb-2">S</button>
+                                    <button class="btn btn-sm btn-outline mb-2">P</button>
+                                    <button class="btn btn-sm btn-outline">更多...</button>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <h3 class="tool-section-title">操作</h3>
+                                <div class="flex gap-2 mb-2">
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 7v6h6"></path>
+                                            <path d="M3 13c0-4.97 4.03-9 9-9 3.9 0 7.25 2.51 8.5 6"></path>
+                                            <path d="M21 17v-6h-6"></path>
+                                            <path d="M21 11c0 4.97-4.03 9-9 9-3.9 0-7.25-2.51-8.5-6"></path>
+                                        </svg>
+                                        撤销
+                                    </button>
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                                            <path d="m9 9 6 6"></path>
+                                            <path d="m15 9-6 6"></path>
+                                        </svg>
+                                        清除
+                                    </button>
+                                </div>
+                                <button class="btn btn-sm btn-outline w-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                        <path d="M3 3v5h5"></path>
+                                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                                        <path d="M16 21h5v-5"></path>
+                                    </svg>
+                                    优化结构
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Canvas area -->
+                        <div class="builder-canvas">
+                            <canvas id="moleculeCanvas"></canvas>
+
+                            <!-- Natural language input -->
+                            <div class="nl-input-container">
+                                <div class="nl-examples">
+                                    <span class="nl-example">添加一个水分子</span>
+                                    <span class="nl-example">绘制苯环</span>
+                                    <span class="nl-example">构建甲烷分子</span>
+                                </div>
+                                <form class="nl-input-form">
+                                    <input type="text" class="nl-input" placeholder="描述您想要构建的分子结构..." />
+                                    <button type="submit" class="nl-submit pulse-animation">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M5 12h14"></path>
+                                            <path d="m12 5 7 7-7 7"></path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Properties panel -->
+                        <div class="builder-properties">
+                            <div class="properties-section">
+                                <h3 class="properties-title">分子信息</h3>
+                                <div class="property-row">
+                                    <span class="property-label">原子数:</span>
+                                    <span class="property-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <span class="property-label">键数:</span>
+                                    <span class="property-value">0</span>
+                                </div>
+                                <div class="property-row">
+                                    <span class="property-label">状态:</span>
+                                    <span class="property-value">
+                                        <span class="badge badge-success">准备就绪</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="properties-section">
+                                <h3 class="properties-title">选中元素属性</h3>
+                                <div class="form-group">
+                                    <label class="form-label">元素类型</label>
+                                    <select class="form-control">
+                                        <option>C (碳)</option>
+                                        <option>H (氢)</option>
+                                        <option>O (氧)</option>
+                                        <option>N (氮)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">电荷 (e)</label>
+                                    <input type="number" class="form-control" value="0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">坐标 (Å)</label>
+                                    <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                                        <input type="number" class="form-control" placeholder="X" step="0.1">
+                                        <input type="number" class="form-control" placeholder="Y" step="0.1">
+                                        <input type="number" class="form-control" placeholder="Z" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-suggestion">
+                                <div class="ai-suggestion-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="ai-suggestion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                        <path d="M7 16.8V16"></path>
+                                        <path d="M12 16.8V9"></path>
+                                        <path d="M17 16.8V12"></path>
+                                        <path d="M15.5 20h-7"></path>
+                                        <path d="M8.5 22h7"></path>
+                                    </svg>
+                                    AI建议
+                                </div>
+                                <p class="text-sm">尝试添加一个苯环作为基础结构，然后在侧链位置加入羧基(-COOH)可以形成苯甲酸。</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'system': `
+                    <h2 class="mb-4">体系设置</h2>
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                                </svg>
+                                边界条件
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label">边界类型</label>
+                                        <select class="form-control">
+                                            <option selected>周期性边界</option>
+                                            <option>真空边界</option>
+                                            <option>反射边界</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="ai-suggestion mt-4">
+                                        <div class="ai-suggestion-label">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="ai-suggestion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                                <path d="M7 16.8V16"></path>
+                                                <path d="M12 16.8V9"></path>
+                                                <path d="M17 16.8V12"></path>
+                                                <path d="M15.5 20h-7"></path>
+                                                <path d="M8.5 22h7"></path>
+                                            </svg>
+                                            AI建议
+                                        </div>
+                                        <p class="text-sm">根据您的分子大小，推荐使用周期性边界条件以减少边界效应影响。</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="form-label">边界盒尺寸 (Å)</label>
+                                    <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                                        <div class="form-group mb-2">
+                                            <label class="form-label text-sm">X</label>
+                                            <input type="number" class="form-control" value="50.0" step="1">
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <label class="form-label text-sm">Y</label>
+                                            <input type="number" class="form-control" value="50.0" step="1">
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <label class="form-label text-sm">Z</label>
+                                            <input type="number" class="form-control" value="50.0" step="1">
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline mt-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                            <path d="M3 3v5h5"></path>
+                                        </svg>
+                                        自动优化盒子大小
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M16.466 7.5C15.643 4.237 13.952 2 12 2 9.239 2 7 6.477 7 12s2.239 10 5 10c.342 0 .677-.069 1-.2"></path>
+                                    <path d="m15.194 13.707 3.814 1.86-1.86 3.814"></path>
+                                    <path d="M19 15.57c-1.804.885-4.274 1.43-7 1.43-5.523 0-10-2.239-10-5s4.477-5 10-5c4.838 0 8.873 1.718 9.8 4"></path>
+                                </svg>
+                                溶剂设置
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label">溶剂类型</label>
+                                        <select class="form-control">
+                                            <option>显式溶剂 (TIP3P水)</option>
+                                            <option>显式溶剂 (SPC/E水)</option>
+                                            <option>隐式溶剂 (GBSA)</option>
+                                            <option>隐式溶剂 (PBS)</option>
+                                            <option selected>无溶剂</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">溶剂密度 (g/cm³)</label>
+                                        <input type="number" class="form-control" value="1.0" step="0.01">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label">离子浓度 (mol/L)</label>
+                                        <input type="number" class="form-control" value="0.15" step="0.01">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">离子类型</label>
+                                        <select class="form-control">
+                                            <option selected>Na+/Cl-</option>
+                                            <option>K+/Cl-</option>
+                                            <option>Ca2+/Cl-</option>
+                                            <option>Mg2+/Cl-</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end gap-4">
+                        <button class="btn btn-outline">返回</button>
+                        <button class="btn btn-primary">保存并继续</button>
+                    </div>
+                `,
+                'simulation': `
+                    <h2 class="mb-4">仿真参数配置</h2>
+                    
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M12 2v8"></path>
+                                    <path d="m4.93 10.93 1.41 1.41"></path>
+                                    <path d="M2 18h2"></path>
+                                    <path d="M20 18h2"></path>
+                                    <path d="m19.07 10.93-1.41 1.41"></path>
+                                    <path d="M22 22H2"></path>
+                                    <path d="M16 8a4 4 0 0 0-8 0"></path>
+                                    <path d="M16 18a4 4 0 0 0-8 0"></path>
+                                </svg>
+                                物理条件
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label">温度 (K)</label>
+                                        <input type="number" class="form-control" value="300" step="5">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">压力 (atm)</label>
+                                        <input type="number" class="form-control" value="1.0" step="0.1">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">恒温器类型</label>
+                                        <select class="form-control">
+                                            <option selected>Nosé-Hoover</option>
+                                            <option>Berendsen</option>
+                                            <option>Langevin</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label">恒压器类型</label>
+                                        <select class="form-control">
+                                            <option selected>Parrinello-Rahman</option>
+                                            <option>Berendsen</option>
+                                            <option>MTTK</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">系综类型</label>
+                                        <select class="form-control">
+                                            <option>NVE (微正则系综)</option>
+                                            <option selected>NVT (正则系综)</option>
+                                            <option>NPT (等温等压系综)</option>
+                                            <option>μVT (巨正则系综)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="ai-suggestion">
+                                        <div class="ai-suggestion-label">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="ai-suggestion-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                                <path d="M7 16.8V16"></path>
+                                                <path d="M12 16.8V9"></path>
+                                                <path d="M17 16.8V12"></path>
+                                                <path d="M15.5 20h-7"></path>
+                                                <path d="M8.5 22h7"></path>
+                                            </svg>
+                                            AI建议
+                                        </div>
+                                        <p class="text-sm">您正在模拟含有柔性分子的凝聚态系统，建议使用NPT系综以允许体积变化。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M3 3v18h18"></path>
+                                    <path d="m3 8 4-4 5 5 5-5 4 4"></path>
+                                    <path d="m3 14 4-4 5 5 5-5 4 4"></path>
+                                    <path d="m3 20 4-4 5 5 5-5 4 4"></path>
+                                </svg>
+                                动力学设置
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label">模拟总步数</label>
+                                        <input type="number" class="form-control" value="1000000" step="10000">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">时间步长 (fs)</label>
+                                        <input type="number" class="form-control" value="2.0" step="0.1">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">输出频率 (步)</label>
+                                        <input type="number" class="form-control" value="1000" step="100">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label">相互作用势</label>
+                                        <select class="form-control">
+                                            <option selected>AMBER力场</option>
+                                            <option>CHARMM</option>
+                                            <option>OPLS-AA</option>
+                                            <option>GROMOS</option>
+                                            <option>ReaxFF</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">截断半径 (Å)</label>
+                                        <input type="number" class="form-control" value="12.0" step="0.5">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" id="useGPU" checked>
+                                            <label for="useGPU" class="form-label mb-0">使用GPU加速</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-6">
+                        <div class="card-header">
+                            <div class="flex justify-between items-center">
+                                <h3 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                        <path d="M7 16.8V16"></path>
+                                        <path d="M12 16.8V9"></path>
+                                        <path d="M17 16.8V12"></path>
+                                        <path d="M15.5 20h-7"></path>
+                                        <path d="M8.5 22h7"></path>
+                                    </svg>
+                                    AI参数推荐
+                                </h3>
+                                <button class="btn btn-ai">
+                                    <span class="btn-ai-icon">🤖</span>
+                                    智能推荐参数
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-4">基于您的分子体系和模拟目标，AI助手可以推荐最优参数设置。点击上方按钮获取定制化建议。</p>
+                            
+                            <div class="bg-gray-50 p-4 rounded mb-4 hidden" id="aiRecommendation">
+                                <h4 class="font-bold mb-2 text-primary">AI参数建议</h4>
+                                <p class="mb-2">基于您构建的分子体系特性，我们建议以下参数设置：</p>
+                                <ul class="mb-4" style="list-style: disc; padding-left: 1.5rem;">
+                                    <li>增加模拟步数至2,000,000以确保充分平衡</li>
+                                    <li>使用NPT系综更适合研究相变行为</li>
+                                    <li>采用Langevin恒温器可以更好地控制温度波动</li>
+                                </ul>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-sm btn-primary">应用建议</button>
+                                    <button class="btn btn-sm btn-outline">查看详情</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end gap-4">
+                        <button class="btn btn-outline">返回</button>
+                        <button class="btn btn-primary">保存并继续</button>
+                    </div>
+                `,
+                'monitor': `
+                    <h2 class="mb-4">运行监测</h2>
+                    
+                    <div class="simulation-controls">
+                        <button class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            开始仿真
+                        </button>
+                        <div class="control-section">
+                            <div class="control-label">仿真进度</div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 45%"></div>
+                                </div>
+                                <div class="progress-text">45% (450,000/1,000,000 步)</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="4" height="16" x="6" y="4"></rect>
+                                <rect width="4" height="16" x="14" y="4"></rect>
+                            </svg>
+                            暂停
+                        </button>
+                    </div>
+                    
+                    <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M3 3v18h18"></path>
+                                        <path d="m3 8 4-4 5 5 5-5 4 4"></path>
+                                        <path d="m3 14 4-4 5 5 5-5 4 4"></path>
+                                        <path d="m3 20 4-4 5 5 5-5 4 4"></path>
+                                    </svg>
+                                    能量演化
+                                </h3>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="m21 21-4.3-4.3"></path>
+                                            <path d="M11 8v6"></path>
+                                            <path d="M8 11h6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="height: 300px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                    [能量演化图表]
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <path d="M12 18v-6"></path>
+                                        <path d="M8 18v-1"></path>
+                                        <path d="M16 18v-3"></path>
+                                    </svg>
+                                    结构演化
+                                </h3>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <circle cx="12" cy="12" r="4"></circle>
+                                            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+                                            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+                                            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+                                            <line x1="14.83" y1="9.17" x2="18.36" y2="5.64"></line>
+                                            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+                                        </svg>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="1"></circle>
+                                            <path d="M12 10V1"></path>
+                                            <path d="m15 5-3 3-3-3"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="visualization-container" style="height: 300px; display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                    [结构可视化]
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M21 10H3"></path>
+                                    <path d="M21 6H3"></path>
+                                    <path d="M21 14H3"></path>
+                                    <path d="M21 18H3"></path>
+                                </svg>
+                                实时日志
+                            </h3>
+                            <button class="btn btn-sm btn-outline">清除</button>
+                        </div>
+                        <div class="card-body">
+                            <div style="font-family: monospace; background-color: var(--gray-50); padding: 1rem; border-radius: var(--radius); height: 200px; overflow-y: auto; color: var(--gray-600);">
+                                [2024-03-16 10:15:23] 初始化系统...<br>
+                                [2024-03-16 10:15:24] 加载分子结构完成<br>
+                                [2024-03-16 10:15:25] 能量最小化开始<br>
+                                [2024-03-16 10:16:02] 能量最小化完成<br>
+                                [2024-03-16 10:16:03] 热平衡开始<br>
+                                [2024-03-16 10:17:45] 热平衡完成<br>
+                                [2024-03-16 10:17:46] 生产模拟开始<br>
+                                [2024-03-16 10:30:12] 完成 100,000 步<br>
+                                [2024-03-16 10:42:35] 完成 200,000 步<br>
+                                [2024-03-16 10:55:17] 完成 300,000 步<br>
+                                [2024-03-16 11:07:42] 完成 400,000 步<br>
+                                [2024-03-16 11:08:03] 当前进度：45%
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'analysis': `
+                    <h2 class="mb-4">数据分析与可视化</h2>
+                    
+                    <div class="tabs mb-6" id="analysisTabs">
+                        <div class="tab active" data-tab="energyAnalysis">能量分析</div>
+                        <div class="tab" data-tab="structureAnalysis">结构分析</div>
+                        <div class="tab" data-tab="statisticsAnalysis">统计分析</div>
+                        <div class="tab" data-tab="aiAnalysis">AI解读</div>
+                    </div>
+                    
+                    <!-- 分析标签内容 -->
+                    <div id="analysisTabContent">
+                        <!-- 能量分析内容 -->
+                        <div id="energyAnalysis" class="analysis-tab-pane active">
+                            <div class="analytics-grid">
+                                <div class="card chart-container">
+                                    <div class="chart-header">
+                                        <h3 class="chart-title">总能量演化</h3>
+                                        <div class="chart-actions">
+                                            <button class="btn btn-sm btn-outline">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                </svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="11" cy="11" r="8"></circle>
+                                                    <path d="m21 21-4.3-4.3"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                        [能量演化图表]
+                                    </div>
+                                </div>
+                                
+                                <div class="card chart-container">
+                                    <div class="chart-header">
+                                        <h3 class="chart-title">能量分量</h3>
+                                        <div class="chart-actions">
+                                            <button class="btn btn-sm btn-outline">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                </svg>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="11" cy="11" r="8"></circle>
+                                                    <path d="m21 21-4.3-4.3"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                        [能量分量图表]
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-6">
+                                <div class="card-header">
+                                    <h3 class="card-title">能量统计数据</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="overflow-x-auto">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>能量类型</th>
+                                                    <th>平均值 (kJ/mol)</th>
+                                                    <th>标准差</th>
+                                                    <th>最小值</th>
+                                                    <th>最大值</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>总能量</td>
+                                                    <td>-33376.5</td>
+                                                    <td>125.3</td>
+                                                    <td>-33625.2</td>
+                                                    <td>-33122.8</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>动能</td>
+                                                    <td>12485.7</td>
+                                                    <td>78.2</td>
+                                                    <td>12325.9</td>
+                                                    <td>12645.2</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>势能</td>
+                                                    <td>-45862.3</td>
+                                                    <td>125.6</td>
+                                                    <td>-46105.8</td>
+                                                    <td>-45621.4</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>键能</td>
+                                                    <td>6425.8</td>
+                                                    <td>42.1</td>
+                                                    <td>6315.7</td>
+                                                    <td>6542.3</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>静电能</td>
+                                                    <td>-23654.7</td>
+                                                    <td>85.4</td>
+                                                    <td>-23815.2</td>
+                                                    <td>-23489.6</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 结构分析内容 -->
+                        <div id="structureAnalysis" class="analysis-tab-pane hidden">
+                            <div class="card mb-6">
+                                <div class="card-header">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="card-title">分子结构演化</h3>
+                                        <div class="flex gap-2">
+                                            <button class="btn btn-sm btn-outline">播放</button>
+                                            <button class="btn btn-sm btn-outline">暂停</button>
+                                            <button class="btn btn-sm btn-outline">导出</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="visualization-container" style="height: 400px; display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                        [分子结构可视化]
+                                    </div>
+                                    <div class="flex justify-center mt-4 gap-2">
+                                        <input type="range" min="0" max="100" value="50" class="w-full max-w-md">
+                                        <span class="text-sm text-gray">500,000 / 1,000,000 步</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">径向分布函数</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                            [径向分布函数图]
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">二面角分布</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                            [二面角分布图]
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 统计分析内容 -->
+                        <div id="statisticsAnalysis" class="analysis-tab-pane hidden">
+                            <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">温度分布</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                            [温度分布图表]
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">压力波动</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                            [压力波动图表]
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-6">
+                                <div class="card-header">
+                                    <h3 class="card-title">关键参数统计</h3>
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                        导出CSV
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="overflow-x-auto">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>参数</th>
+                                                    <th>平均值</th>
+                                                    <th>标准差</th>
+                                                    <th>最小值</th>
+                                                    <th>最大值</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>温度 (K)</td>
+                                                    <td>299.7</td>
+                                                    <td>1.2</td>
+                                                    <td>297.5</td>
+                                                    <td>302.1</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>压力 (bar)</td>
+                                                    <td>1.01</td>
+                                                    <td>0.05</td>
+                                                    <td>0.95</td>
+                                                    <td>1.08</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>体积 (nm³)</td>
+                                                    <td>125.3</td>
+                                                    <td>0.8</td>
+                                                    <td>123.7</td>
+                                                    <td>127.2</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>密度 (kg/m³)</td>
+                                                    <td>998.2</td>
+                                                    <td>5.4</td>
+                                                    <td>985.6</td>
+                                                    <td>1010.7</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>RMSD (nm)</td>
+                                                    <td>0.25</td>
+                                                    <td>0.03</td>
+                                                    <td>0.19</td>
+                                                    <td>0.32</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI解读内容 -->
+                        <div id="aiAnalysis" class="analysis-tab-pane hidden">
+                            <div class="card mb-6">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                            <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                            <path d="M7 16.8V16"></path>
+                                            <path d="M12 16.8V9"></path>
+                                            <path d="M17 16.8V12"></path>
+                                            <path d="M15.5 20h-7"></path>
+                                            <path d="M8.5 22h7"></path>
+                                        </svg>
+                                        AI分析摘要
+                                    </h3>
+                                    <button class="btn btn-sm btn-ai">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                            <path d="M12 3v12"></path>
+                                            <path d="m8 11 4 4 4-4"></path>
+                                            <path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4"></path>
+                                        </svg>
+                                        生成完整报告
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                        <h4 class="font-bold mb-3 text-primary">系统稳定性分析</h4>
+                                        <p class="mb-4">分析结果表明，该分子体系在300K温度下保持了良好的结构稳定性，总能量在模拟后半段趋于平衡。π-π堆积相互作用是维持分子组装体系稳定的主要因素。在整个模拟过程中，RMSD值稳定在0.25±0.03 nm，表明系统已达到平衡状态。</p>
+                                        <p>氢键网络分析显示，平均每个分子形成2.7个氢键，且氢键寿命约为15.3 ps，这进一步证实了体系的稳定性。压力波动在正常范围内，体积收缩率小于2%，符合预期。</p>
+                                    </div>
+                                    
+                                    <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-100">
+                                        <h4 class="font-bold mb-3 text-success">关键发现</h4>
+                                        <ul style="list-style: disc; padding-left: 1.5rem;">
+                                            <li class="mb-2">分子在水溶液中的构象与初始构象存在约23%的差异，主要体现在侧链的重排</li>
+                                            <li class="mb-2">疏水区域的溶剂可及性显著低于预期，表明分子可能倾向于形成自组装结构</li>
+                                            <li class="mb-2">温度对二面角分布的影响较小，结构具有良好的热稳定性</li>
+                                            <li class="mb-2">在模拟末期观察到了一些分子间的π-π堆积相互作用，可能是自组装的初始阶段</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                                        <h4 class="font-bold mb-3 text-warning">建议与下一步</h4>
+                                        <p class="mb-4">基于当前结果，我们建议：</p>
+                                        <ul style="list-style: disc; padding-left: 1.5rem;">
+                                            <li class="mb-2">进行更长时间的模拟，以观察可能的自组装过程</li>
+                                            <li class="mb-2">测试不同温度条件（如250K和350K）以研究温度对体系稳定性的影响</li>
+                                            <li class="mb-2">考虑增加分子浓度，促进自组装过程</li>
+                                            <li class="mb-2">对关键残基进行突变分析，评估其对整体结构的影响</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">相关文献推荐</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                                        <h4 class="font-bold mb-2">分子自组装动力学研究进展</h4>
+                                        <p class="text-sm mb-2">Wang et al., Journal of Chemical Physics, 2023</p>
+                                        <p class="text-sm mb-3">该研究使用分子动力学模拟探索了类似分子体系的自组装机理，与您的研究高度相关。</p>
+                                        <button class="btn btn-sm btn-outline">查看详情</button>
+                                    </div>
+                                    
+                                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                                        <h4 class="font-bold mb-2">π-π相互作用在分子识别中的作用</h4>
+                                        <p class="text-sm mb-2">Zhang et al., Nature Communications, 2023</p>
+                                        <p class="text-sm mb-3">这项研究详细分析了π-π堆积如何影响分子间相互作用和结构稳定性。</p>
+                                        <button class="btn btn-sm btn-outline">查看详情</button>
+                                    </div>
+                                    
+                                    <div class="p-4 bg-gray-50 rounded-lg">
+                                        <h4 class="font-bold mb-2">温度对有机分子结构稳定性的影响</h4>
+                                        <p class="text-sm mb-2">Li et al., Journal of Materials Chemistry, 2022</p>
+                                        <p class="text-sm mb-3">该研究系统地考察了温度变化对类似有机分子体系结构和动力学行为的影响。</p>
+                                        <button class="btn btn-sm btn-outline">查看详情</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ai-assistant-banner mb-6">
+                        <div class="ai-assistant-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                <path d="M7 16.8V16"></path>
+                                <path d="M12 16.8V9"></path>
+                                <path d="M17 16.8V12"></path>
+                                <path d="M15.5 20h-7"></path>
+                                <path d="M8.5 22h7"></path>
+                            </svg>
+                        </div>
+                        <div class="ai-assistant-content">
+                            <h3 class="ai-assistant-title">AI助手分析摘要</h3>
+                            <p class="ai-assistant-text">分析结果表明，该分子体系在300K温度下保持了良好的结构稳定性，总能量在模拟后半段趋于平衡。π-π堆积相互作用是维持分子组装体系稳定的主要因素。建议进一步研究温度对体系稳定性的影响。</p>
+                            <div class="ai-assistant-actions">
+                                <button class="btn btn-sm btn-primary">生成完整报告</button>
+                                <button class="btn btn-sm btn-outline">导出分析结果</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-grid">
+                        <div class="card chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">总能量演化</h3>
+                                <div class="chart-actions">
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="m21 21-4.3-4.3"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                [能量演化图表]
+                            </div>
+                        </div>
+                        
+                        <div class="card chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">温度分布</h3>
+                                <div class="chart-actions">
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="m21 21-4.3-4.3"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="height: 250px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                [温度分布图表]
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <path d="M20.4 14.5 16 10 4 20"></path>
+                                </svg>
+                                结构演化动画
+                            </h3>
+                            <div class="flex gap-2">
+                                <button class="btn btn-sm btn-outline">播放</button>
+                                <button class="btn btn-sm btn-outline">暂停</button>
+                                <button class="btn btn-sm btn-outline">下载</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="visualization-container" style="height: 400px; display: flex; justify-content: center; align-items: center; color: var(--gray-500);">
+                                [分子动画可视化]
+                            </div>
+                            <div class="flex justify-center mt-4 gap-2">
+                                <input type="range" min="0" max="100" value="50" class="w-full max-w-md">
+                                <span class="text-sm text-gray">500,000 / 1,000,000 步</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-6">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M20 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"></path>
+                                    <path d="M8 10v4"></path>
+                                    <path d="M12 8v6"></path>
+                                    <path d="M16 6v8"></path>
+                                </svg>
+                                关键参数统计
+                            </h3>
+                            <button class="btn btn-sm btn-outline">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                导出CSV
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="overflow-x-auto">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>参数</th>
+                                            <th>平均值</th>
+                                            <th>标准差</th>
+                                            <th>最小值</th>
+                                            <th>最大值</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>温度 (K)</td>
+                                            <td>299.7</td>
+                                            <td>1.2</td>
+                                            <td>297.5</td>
+                                            <td>302.1</td>
+                                        </tr>
+                                        <tr>
+                                            <td>势能 (kJ/mol)</td>
+                                            <td>-45862.3</td>
+                                            <td>125.6</td>
+                                            <td>-46105.8</td>
+                                            <td>-45621.4</td>
+                                        </tr>
+                                        <tr>
+                                            <td>动能 (kJ/mol)</td>
+                                            <td>12485.7</td>
+                                            <td>78.2</td>
+                                            <td>12325.9</td>
+                                            <td>12645.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td>体积 (nm³)</td>
+                                            <td>125.3</td>
+                                            <td>0.8</td>
+                                            <td>123.7</td>
+                                            <td>127.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td>密度 (kg/m³)</td>
+                                            <td>998.2</td>
+                                            <td>5.4</td>
+                                            <td>985.6</td>
+                                            <td>1010.7</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                'help': `
+                    <h2 class="mb-4">帮助中心</h2>
+                    
+                    <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    快速入门
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-4">了解如何使用本平台的基础功能，快速创建并运行您的第一个分子动力学模拟。</p>
+                                <ul class="mb-4" style="list-style: disc; padding-left: 1.5rem;">
+                                    <li>创建新项目</li>
+                                    <li>构建分子结构</li>
+                                    <li>设置模拟参数</li>
+                                    <li>运行模拟</li>
+                                    <li>分析结果</li>
+                                </ul>
+                                <button class="btn btn-primary w-full">查看教程</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M12 2a5 5 0 0 0-5 5v8.2c0 1.7.5 3.3 1.4 4.6"></path>
+                                        <path d="M7 16.8V16"></path>
+                                        <path d="M12 16.8V9"></path>
+                                        <path d="M17 16.8V12"></path>
+                                        <path d="M15.5 20h-7"></path>
+                                        <path d="M8.5 22h7"></path>
+                                    </svg>
+                                    AI功能指南
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-4">探索平台中的人工智能功能，学习如何利用AI助手提高工作效率。</p>
+                                <ul class="mb-4" style="list-style: disc; padding-left: 1.5rem;">
+                                    <li>自然语言分子构建</li>
+                                    <li>AI参数优化</li>
+                                    <li>智能结果分析</li>
+                                    <li>自动脚本生成</li>
+                                    <li>自定义AI提示</li>
+                                </ul>
+                                <button class="btn btn-primary w-full">了解更多</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                        <path d="M12 9h.01"></path>
+                                        <path d="M11 12h1v4h1"></path>
+                                        <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9-9 9-9-1.8-9-9 1.8-9 9-9z"></path>
+                                    </svg>
+                                    常见问题
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-4">查看用户常见问题及解答，解决使用过程中可能遇到的各种问题。</p>
+                                <div class="mb-4">
+                                    <div class="mb-2 font-bold">如何导入外部分子结构文件？</div>
+                                    <p class="text-sm">您可以在分子构建页面点击"导入结构"按钮，支持PDB、MOL2、XYZ等格式。</p>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="mb-2 font-bold">如何设置自定义力场参数？</div>
+                                    <p class="text-sm">在仿真参数页面中选择"自定义力场"选项，然后上传您的参数文件。</p>
+                                </div>
+                                <button class="btn btn-primary w-full">查看全部问题</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-6">
+                        <div class="card-header">
+                            <h3 class="card-title">视频教程</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+                                <div>
+                                    <div style="height: 150px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500); margin-bottom: 0.5rem;">
+                                        [视频缩略图]
+                                    </div>
+                                    <h4 class="font-bold mb-1">平台功能概览</h4>
+                                    <p class="text-sm text-gray">5:32 • 入门级</p>
+                                </div>
+                                <div>
+                                    <div style="height: 150px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500); margin-bottom: 0.5rem;">
+                                        [视频缩略图]
+                                    </div>
+                                    <h4 class="font-bold mb-1">使用AI构建复杂分子</h4>
+                                    <p class="text-sm text-gray">8:15 • 中级</p>
+                                </div>
+                                <div>
+                                    <div style="height: 150px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500); margin-bottom: 0.5rem;">
+                                        [视频缩略图]
+                                    </div>
+                                    <h4 class="font-bold mb-1">高级参数设置与优化</h4>
+                                    <p class="text-sm text-gray">12:47 • 高级</p>
+                                </div>
+                                <div>
+                                    <div style="height: 150px; background-color: var(--gray-100); border-radius: var(--radius); display: flex; justify-content: center; align-items: center; color: var(--gray-500); margin-bottom: 0.5rem;">
+                                        [视频缩略图]
+                                    </div>
+                                    <h4 class="font-bold mb-1">结果分析与数据处理</h4>
+                                    <p class="text-sm text-gray">10:23 • 中级</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center mt-6">
+                        <button class="btn btn-primary">联系技术支持</button>
+                    </div>
+                `
+            };
+            
+            // 获取页面标题元素
+            const pageTitle = document.querySelector('.page-title');
+            const pageDescription = document.querySelector('.workspace-header p');
+            
+            // 创建内容切换函数
+            function switchContent(contentId) {
+                // 渲染对应的内容
+                const workspaceContent = document.querySelector('.workspace-content');
+                
+                // 如果有对应的内容模板，则显示该内容
+                if (contentTemplates[contentId]) {
+                    workspaceContent.innerHTML = contentTemplates[contentId];
+                    
+                    // 更新页面标题
+                    if (contentId === 'overview') {
+                        pageTitle.textContent = '项目概览';
+                        pageDescription.textContent = '查看和管理您的所有分子动力学模拟项目';
+                    } else if (contentId === 'build') {
+                        pageTitle.textContent = '分子构建';
+                        pageDescription.textContent = '通过自然语言描述或图形界面构建您的分子模型';
+                    } else if (contentId === 'system') {
+                        pageTitle.textContent = '体系设置';
+                        pageDescription.textContent = '配置模拟环境、边界条件和溶剂参数';
+                    } else if (contentId === 'simulation') {
+                        pageTitle.textContent = '仿真参数';
+                        pageDescription.textContent = '设置动力学参数、物理条件和计算细节';
+                    } else if (contentId === 'monitor') {
+                        pageTitle.textContent = '运行监测';
+                        pageDescription.textContent = '实时监控模拟进度和关键参数变化';
+                    } else if (contentId === 'analysis') {
+                        pageTitle.textContent = '数据分析与可视化';
+                        pageDescription.textContent = '分析模拟结果并生成可视化报告';
+                    } else if (contentId === 'help') {
+                        pageTitle.textContent = '帮助中心';
+                        pageDescription.textContent = '查找教程、常见问题解答和技术支持';
+                    } else if (contentId === 'history') {
+                        pageTitle.textContent = '历史记录';
+                        pageDescription.textContent = '查看您的所有分子动力学模拟和测试的历史记录'
+                    } else if (contentId === 'tutorials') {
+                        pageTitle.textContent = '教程与资源';
+                        pageDescription.textContent = '我们提供所有免费公开的平台使用教程，并为您制定个性化的学习路径';    
+                    } else {
+                        pageTitle.textContent = contentId.charAt(0).toUpperCase() + contentId.slice(1);
+                        pageDescription.textContent = '';
+                    }
+                    
+                    // 重新初始化分子画布（如果在当前页面）
+                    if (contentId === 'build' && document.getElementById('moleculeCanvas')) {
+                        resizeCanvas();
+                    }
+                    
+                    // 显示AI参数推荐（如果点击了推荐按钮）
+                    if (contentId === 'simulation') {
+                        const aiRecommendBtn = document.querySelector('.btn-ai');
+                        const aiRecommendation = document.getElementById('aiRecommendation');
+                        
+                        if (aiRecommendBtn && aiRecommendation) {
+                            aiRecommendBtn.addEventListener('click', function() {
+                                aiRecommendation.classList.remove('hidden');
+                            });
+                        }
+                    }
+                    
+                    // 处理标签切换
+                    if (contentId === 'analysis') {
+                        // 延迟一点执行以确保DOM已完全加载
+                        setTimeout(initAnalysisTabs, 100);
+                    }
+                }
+            }
+
+            // 初始化分析标签页功能的函数
+            function initAnalysisTabs() {
+                const analysisTabs = document.querySelectorAll('#analysisTabs .tab');
+                if (analysisTabs.length > 0) {
+                    analysisTabs.forEach(tab => {
+                        tab.addEventListener('click', function() {
+                            // 更新标签状态
+                            analysisTabs.forEach(t => t.classList.remove('active'));
+                            this.classList.add('active');
+                            
+                            // 获取标签对应的内容ID
+                            const tabId = this.getAttribute('data-tab');
+                            
+                            // 隐藏所有内容面板
+                            document.querySelectorAll('.analysis-tab-pane').forEach(pane => {
+                                pane.classList.add('hidden');
+                                pane.classList.remove('active');
+                            });
+                            
+                            // 显示选中的内容面板
+                            const targetPane = document.getElementById(tabId);
+                            if (targetPane) {
+                                targetPane.classList.remove('hidden');
+                                targetPane.classList.add('active');
+                            }
+                        });
+                    });
+                }
+            }
+
+            
+            // 侧边栏导航项点击事件
+            const navLinks = document.querySelectorAll('.nav-item a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // 移除所有导航项的活动状态
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // 添加当前导航项的活动状态
+                    this.classList.add('active');
+                    
+                    // 获取目标内容ID
+                    const contentId = this.getAttribute('href').substring(1);
+                    
+                    // 切换内容
+                    switchContent(contentId);
+                });
+            });
+            
+            // 自然语言输入示例点击事件
+            function setupNlExamples() {
+                const nlExamples = document.querySelectorAll('.nl-example');
+                const nlInput = document.querySelector('.nl-input');
+                
+                if (nlExamples.length > 0 && nlInput) {
+                    nlExamples.forEach(example => {
+                        example.addEventListener('click', function() {
+                            nlInput.value = this.textContent;
+                            nlInput.focus();
+                        });
+                    });
+                    
+                    // 自然语言输入提交
+                    const nlForm = document.querySelector('.nl-input-form');
+                    if (nlForm) {
+                        nlForm.addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            const input = nlInput.value.trim();
+                            if (input) {
+                                // 这里会发送请求到后端处理自然语言输入
+                                console.log('Processing natural language input:', input);
+                                
+                                // 清空输入
+                                nlInput.value = '';
+                                
+                                // 显示处理反馈（实际应用中这里会根据后端返回结果绘制分子）
+                                showFeedback('正在处理您的请求: ' + input);
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // 绘图工具按钮点击事件处理
+            function setupToolButtons() {
+                const toolButtons = document.querySelectorAll('.tool-btn');
+                if (toolButtons.length > 0) {
+                    toolButtons.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            // 移除所有工具按钮的活动状态
+                            toolButtons.forEach(b => b.classList.remove('active'));
+                            // 添加当前工具按钮的活动状态
+                            this.classList.add('active');
+                        });
+                    });
+                }
+            }
+            
+            // 初始化时调整画布尺寸
+            function resizeCanvas() {
+                const canvas = document.getElementById('moleculeCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    const container = canvas.parentElement;
+                    canvas.width = container.clientWidth;
+                    canvas.height = container.clientHeight;
+                    // 绘制网格或背景
+                    drawCanvasBackground(canvas, ctx);
+                }
+            }
+            
+            // 绘制画布背景
+            function drawCanvasBackground(canvas, ctx) {
+                // 绘制网格作为背景
+                const gridSize = 20;
+                const width = canvas.width;
+                const height = canvas.height;
+                
+                ctx.clearRect(0, 0, width, height);
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.lineWidth = 0.5;
+                
+                // 绘制水平线
+                for (let y = 0; y <= height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                }
+                
+                // 绘制垂直线
+                for (let x = 0; x <= width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                }
+                
+                // 绘制原点和坐标轴
+                const centerX = Math.floor(width / 2);
+                const centerY = Math.floor(height / 2);
+                
+                ctx.strokeStyle = '#6b7280';
+                ctx.lineWidth = 1;
+                
+                // X轴
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(width, centerY);
+                ctx.stroke();
+                
+                // Y轴
+                ctx.beginPath();
+                ctx.moveTo(centerX, 0);
+                ctx.lineTo(centerX, height);
+                ctx.stroke();
+                
+                // 原点标记
+                ctx.fillStyle = '#3b82f6';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // 窗口大小变化时重新调整画布大小
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 显示反馈信息
+            function showFeedback(message) {
+                const feedbackEl = document.createElement('div');
+                feedbackEl.className = 'feedback-toast';
+                feedbackEl.textContent = message;
+                feedbackEl.style.position = 'fixed';
+                feedbackEl.style.bottom = '30px';
+                feedbackEl.style.right = '30px';
+                feedbackEl.style.padding = '12px 20px';
+                feedbackEl.style.backgroundColor = 'var(--primary)';
+                feedbackEl.style.color = 'white';
+                feedbackEl.style.borderRadius = 'var(--radius)';
+                feedbackEl.style.boxShadow = 'var(--shadow-lg)';
+                feedbackEl.style.zIndex = '1000';
+                
+                document.body.appendChild(feedbackEl);
+                
+                setTimeout(() => {
+                    feedbackEl.remove();
+                }, 3000);
+            }
+            
+            // 初始化默认页面内容
+            switchContent('overview');
+            
+            // 监听内容变化，设置事件处理程序
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        setupNlExamples();
+                        setupToolButtons();
+                    }
+                });
+            });
+            
+            // 开始观察内容区域的变化
+            observer.observe(document.querySelector('.workspace-content'), { childList: true });
+        });
+    </script>
+</body>
+</html>
